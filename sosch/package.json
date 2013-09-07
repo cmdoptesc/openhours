@@ -12,6 +12,6 @@
     "underscore": "*"
   },
   "scripts": {
-    "start": "openhours.js"
+    "start": "index.js"
   }
 }

@@ -3,17 +3,16 @@ var helpers = require('./helpers.js');
 var commaseparated = require('./commaseparated.js');
 
   // find the open restaurants at a given time
-var findOpenSpots = function(restaurants, dateObj) {
+var showOpenSpots = function(restaurants, dateObj, printSpots) {
   var openSpots = [];
   var day = helpers.getDay(dateObj);
 
   _.each(restaurants, function(rest) {
     if(rest.isOpen(dateObj)) {
-      var spot = {
-        name: rest.name,
-        close: rest.schedule[day].close
-      };
-      openSpots.push(spot);
+      if(printSpots) {
+        console.log(rest.name +' (closes at '+ rest.schedule[day].close +')');
+      }
+      openSpots.push(rest);
     }
   });
 
@@ -22,22 +21,20 @@ var findOpenSpots = function(restaurants, dateObj) {
 
 var parseCSV = commaseparated.cacher();
 
-var find_open_restaurants = function(csv_filepath, dateObj) {
+var find_open_restaurants = function(csv_filepath, dateObj, callback) {
   parseCSV(csv_filepath, function(restaurants) {
-    var openSpots = findOpenSpots(restaurants, dateObj);
+    var openSpots = showOpenSpots(restaurants, dateObj, true);
 
-    _.each(openSpots, function(spot) {
-      console.log(spot.name +' (closes at '+ spot.close +')');
-    });
+    return (callback) ? callback(openSpots) : openSpots;
   });
 };
 
 module.exports = find_open_restaurants;
 
-find_open_restaurants('./rest_hours.csv', new Date());
+// find_open_restaurants('./rest_hours.csv', new Date());
 
-  // this is to demonstrate the caching.. need a setTimeout to give the server
-  //  some time to read and parse the CSV
-setTimeout(function(){
-  find_open_restaurants('./rest_hours.csv', new Date());
-}, 1000);
+//   // this is to demonstrate the caching.. need a setTimeout to give the server
+//   //  some time to read and parse the CSV
+// setTimeout(function(){
+//   find_open_restaurants('./rest_hours.csv', new Date());
+// }, 1000);
