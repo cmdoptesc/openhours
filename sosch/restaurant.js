@@ -21,6 +21,8 @@ Restaurant.prototype.isOpen = function(dateObj) {
   var time = parseInt(dateObj.getHours(), 10);
   time += parseFloat(dateObj.getMinutes()/60);
 
+    // to simplify things, I used 5am as a cutoff between days
+    //  ----- change this if need be -----
   var cutoff = 5;
 
     // if it's after midnight, use the schedule from the previous day
