@@ -4,10 +4,7 @@ var Restaurant = require('./restaurant.js');
 
 var commaseparated = {
     // parses CSV data line by line and creates a restaurant object from each line
-    //  then returns an array of restaurant objects. chose an array since it's
-    //  quicker to iterate over an array, however if we wanted to look up
-    //  specific restaurants, an object with restaurant names as the key would've
-    //  been better
+    //  then returns an array of restaurant objects
   parser: function(csvData) {
     var restaurantsRaw = csvData.toString().split(/\r?\n/);
     var parsed = [];
