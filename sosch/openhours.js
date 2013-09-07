@@ -14,10 +14,10 @@ var findOpenSpots = function(restaurants, dateObj) {
   return openSpots;
 };
 
-var readCSV = commaseparated.cacher();
+var parseCSV = commaseparated.cacher();
 
 var find_open_restaurants = function(csv_filepath, dateObj) {
-  readCSV(csv_filepath, function(restaurants){
+  parseCSV(csv_filepath, function(restaurants){
     console.log(findOpenSpots(restaurants, dateObj));
   });
 };
@@ -25,6 +25,8 @@ var find_open_restaurants = function(csv_filepath, dateObj) {
 
 find_open_restaurants('./rest_hours.csv', new Date());
 
+  // this is to demonstrate the caching.. need a setTimeout to give the server
+  //  some time to read and parse the CSV
 setTimeout(function(){
   find_open_restaurants('./rest_hours.csv', new Date());
 }, 1000);

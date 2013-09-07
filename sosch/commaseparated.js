@@ -4,6 +4,7 @@ var Restaurant = require('./restaurant.js');
 
 var commaseparated = {
     // parses CSV data line by line and creates a restaurant object from each line
+    //  then returns an array of restaurant objects
   parser: function(csvData) {
     var restaurantsRaw = csvData.toString().split(/\r?\n/);
     var parsed = [];
@@ -21,7 +22,7 @@ var commaseparated = {
   },
 
     // caches CSV files so if the same filepath is called upon again
-    //  it reads the cache as opposed to the file
+    //  it reads the parsed object from the cache as opposed to the file
   cacher: function() {
     var cache = {};
 
