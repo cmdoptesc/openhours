@@ -1,0 +1,17 @@
+{
+  "name": "openhours",
+  "version": "0.1.0",
+  "description": "Question from Rod@Sosh",
+  "author": {
+    "name": "al lin",
+    "url": "http://cmdoptesc.com"
+  },
+  "engine": "node >= 0.8.x",
+  "private": true,
+  "dependencies": {
+    "underscore": "*"
+  },
+  "scripts": {
+    "start": "openhours.js"
+  }
+}
