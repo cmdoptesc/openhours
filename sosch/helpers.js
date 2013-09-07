@@ -68,20 +68,20 @@ var helpers = {
       var openDays = [];     // array of days sharing the same schedule
 
       var dayRangeRegex = /[a-z]{3}-[a-z]{3}/i;
-      var dayRange;
-      if(dayRangeRegex.test(schedule)) {
-        dayRange = dayRangeRegex.exec(schedule)[0].split('-');
+      if(schedule.match(dayRangeRegex) && schedule.match(dayRangeRegex).length > 0) {
+        var dayRange = schedule.match(dayRangeRegex)[0].split('-');
         openDays = helpers.rangeToDays(dayRange[0], dayRange[1]);
       }
 
-      var singleDaysRegex = /[a-zA-Z]{3}/g;
-      var res;
-      while (res = singleDaysRegex.exec(schedule)) {
-          openDays.push(res[0]);
-      }
+      var singleDaysRegex = /([a-zA-Z]{3})/g;
+      var singleDays = schedule.match(singleDaysRegex);
+
+      _.each(singleDays, function(day) {
+        openDays.push(day);
+      });
 
       var hoursRegex = /\d*:*\d+ [ap]m - \d*:*\d+ [ap]m/;
-      var openclose = hoursRegex.exec(schedule)[0].split(' - ');
+      var openclose = schedule.match(hoursRegex)[0].split(' - ');
 
       _.each(openDays, function(day){
         days[day] = {};
