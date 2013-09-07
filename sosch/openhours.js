@@ -2,7 +2,8 @@ var _ = require('underscore');
 var helpers = require('./helpers.js');
 var commaseparated = require('./commaseparated.js');
 
-  // find the open restaurants at a given time
+  // find and possibly the open restaurants at a given time
+  //  printSpots is a boolean to print out the open spots
 var showOpenSpots = function(restaurants, dateObj, printSpots) {
   var openSpots = [];
   var day = helpers.getDay(dateObj);
