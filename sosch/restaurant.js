@@ -19,7 +19,7 @@ Restaurant.prototype.isOpen = function(dateObj) {
   if(open < close && open <= time && time < close) {
     return true;
   } else if(open > close) {     // if it rolls over to the next day (e.g. 1800 - 0200)
-    if( (open < time && time <= 24) || (0 <= time && time < close) ) {
+    if( (open <= time && time <= 24) || (0 <= time && time < close) ) {
       return true;
     }
   }

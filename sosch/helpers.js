@@ -95,8 +95,8 @@ var helpers = {
 
     // since the schedule considers early morning hours as the previous
     //  day, I've set 5am as the cutoff. times between midnight and 5am
-    //  will reflect the previous day's schedule
-  cutoff: 5,
+    //  will reference the previous day's schedule
+  _cutoff: 5,
 
   getDay: function(dateObj) {
     var weekday = {
@@ -112,7 +112,7 @@ var helpers = {
     var hour = parseInt(dateObj.getHours(), 10);
     var day = weekday[dateObj.getDay()];
 
-    if(hour < helpers.cutoff) {
+    if(hour < helpers._cutoff) {
       day = (day === 'Sun') ? 'Sat' : weekday[dateObj.getDay()-1];
     }
 
