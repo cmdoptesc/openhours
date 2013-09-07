@@ -91,6 +91,38 @@ var helpers = {
     });
 
     return days;
+  },
+
+    // since the schedule considers early morning hours as the previous
+    //  day, I've set 5am as the cutoff. times between midnight and 5am
+    //  will reflect the previous day's schedule
+  cutoff: 5,
+
+  getDay: function(dateObj) {
+    var weekday = {
+      0: 'Sun',
+      1: 'Mon',
+      2: 'Tue',
+      3: 'Wed',
+      4: 'Thu',
+      5: 'Fri',
+      6: 'Sat'
+    };
+
+    var hour = parseInt(dateObj.getHours(), 10);
+    var day = weekday[dateObj.getDay()];
+
+    if(hour < helpers.cutoff) {
+      day = (day === 'Sun') ? 'Sat' : weekday[dateObj.getDay()-1];
+    }
+
+    return day;
+  },
+
+  getTime: function(dateObj) {
+    var time = parseInt(dateObj.getHours(), 10);
+    time += parseFloat(dateObj.getMinutes()/60);
+    return time;
   }
 };
 

@@ -7,28 +7,10 @@ var Restaurant = function(name, rawHours) {
 
   // returns true if it's open for the time, false if not
 Restaurant.prototype.isOpen = function(dateObj) {
-  var weekday = {
-    0: 'Sun',
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat'
-  };
+  var time = helpers.getTime(dateObj);
+  var day = helpers.getDay(dateObj);
 
-  var day = weekday[dateObj.getDay()];
-  var time = parseInt(dateObj.getHours(), 10);
-  time += parseFloat(dateObj.getMinutes()/60);
-
-    // to simplify things, I used 5am as a cutoff between days
-    //  ----- change this if need be -----
-  var cutoff = 5;
-
-    // if it's after midnight, use the schedule from the previous day
-  if(time < cutoff) {
-    day = (day === 'Sun') ? 'Sat' : weekday[dateObj.getDay()-1];
-  }
+  var cutoff = helpers.cutoff;
 
   if(typeof this.schedule[day] === 'undefined') { return false; }
   var open = this.schedule[day].open;
