@@ -34,12 +34,25 @@ var render = function(dataset) {
   //     yMap = function(d) { return yScale(yValue(d)); }, // data -> display
   //     yAxis = d3.svg.axis().scale(yScale).orient("left");
 
+  var currentTime = new Date();
+  var hours = (currentTime.getHours() < helpers.cutoff) ? currentTime.getHours()+24 : currentTime.getHours();
+  hours += Math.round((currentTime.getMinutes()/60)*10000)/10000;
+
+  vis.append("line")
+      .attr("class", 'current-time')
+      .attr("x1", xScale(hours))
+      .attr("x2", xScale(hours))
+      .attr("y1", 0)
+      .attr("y2", height);
+
   vis.append("g")
-      .attr("class", "x_axis")
+      .attr("class", 'x-axis')
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
 
-  vis.selectAll("line.rule")
+  var x_rules = vis.append("g").attr("class", 'x-rules');
+
+  x_rules.selectAll("line.rule")
       .data(xScale.ticks(max))
       .enter().append("line")
       .attr("class", 'rule')
@@ -53,7 +66,21 @@ var render = function(dataset) {
 
   var group = gBar.enter().append("svg:g").attr("class", 'bar-group');
 
+  group.append('text')
+    .attr("class", 'restaurant-names')
+    .attr("x", function(d){
+      return xScale(d.open)-10;
+    })
+    .attr("y", function(d, i){
+      return i*10;
+    })
+    .attr("text-anchor", "end")
+    .text(function(d){
+      return d.name;
+    });
+
   group.append('rect')
+    .attr("class", 'rect-rest')
     .attr("x", function(d){
       return xScale(d.open);
     })
@@ -61,6 +88,19 @@ var render = function(dataset) {
       return i*10;
     })
     .attr("width", xValue)
-    .attr("height", 4);
+    .attr("height", 4)
+    .on("mouseover", function() {
+      d3.select(this).transition()
+          .duration(100)
+          .attr("height", 10)
+          .attr("transform", "translate(0,-3)");
+    })
+    .on("mouseout", function() {
+      d3.select(this).transition()
+          .duration(100).attr('height', 4)
+          .attr("transform", "translate(0,0)");
+    });
+
+
 
 };
