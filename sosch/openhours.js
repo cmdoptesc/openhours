@@ -1,11 +1,6 @@
-var fs = require('fs');
-var _ = require('underscore');
-
 // formerly helpers.js
 
 var helpers = {
-    // given a start day and end day,
-    // return an array of all the days between them, inclusive
   rangeToDays: function(startDay, endDay) {
     var week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     var days = [];
@@ -47,55 +42,6 @@ var helpers = {
     return hours;
   },
 
-    // takes the raw times portion of the CSV and parses it to a object
-    // in the format of:
-    /*    days = {
-            Mon: {
-              open: 11,
-              close: 23
-            },
-            Tue: {
-              open: 11,
-              close: 23
-            }
-          }
-    */
-    // times are stored in 24 format
-  parseRawHours: function(rawHours) {
-    var days = {};
-
-    var schedules = rawHours.split('/');
-    _.each(schedules, function(schedule) {
-      schedule = schedule.trim();
-
-      var openDays = [];     // array of days sharing the same schedule
-
-      var dayRangeRegex = /[a-z]{3}-[a-z]{3}/i;
-      if(schedule.match(dayRangeRegex) && schedule.match(dayRangeRegex).length > 0) {
-        var dayRange = schedule.match(dayRangeRegex)[0].split('-');
-        openDays = helpers.rangeToDays(dayRange[0], dayRange[1]);
-      }
-
-      var singleDaysRegex = /([a-zA-Z]{3})/g;
-      var singleDays = schedule.match(singleDaysRegex);
-
-      _.each(singleDays, function(day) {
-        openDays.push(day);
-      });
-
-      var hoursRegex = /\d*:*\d+ [ap]m - \d*:*\d+ [ap]m/;
-      var openclose = schedule.match(hoursRegex)[0].split(' - ');
-
-      _.each(openDays, function(day){
-        days[day] = {};
-        days[day].open = helpers.to24Hr(openclose[0]);
-        days[day].close = helpers.to24Hr(openclose[1]);
-      });
-    });
-
-    return days;
-  },
-
     // since the schedule considers early morning hours as the previous
     //  day, I've set 5am as the cutoff. times between midnight and 5am
     //  will reference the previous day's schedule
@@ -129,13 +75,65 @@ var helpers = {
   }
 };
 
+var makeSchedule = function(rawSchedule) {
+  var schedule = init(rawSchedule);
+
+  function _parseHours(rawHours) {
+    var hoursRegex = /\d*:*\d+ [ap]m - \d*:*\d+ [ap]m/;
+    var openclose = rawHours.match(hoursRegex)[0].split(' - ');
+    openclose[0] = helpers.to24Hr(openclose[0]);
+    openclose[1] = helpers.to24Hr(openclose[1]);
+
+    return openclose;
+  }
+
+  function _parseDays(rawDays) {
+    var openDays = [];     // array of days sharing the same schedule
+
+    var dayRangeRegex = /[a-z]{3}-[a-z]{3}/i;
+    if(rawDays.match(dayRangeRegex) && rawDays.match(dayRangeRegex).length > 0) {
+      var dayRange = rawDays.match(dayRangeRegex)[0].split('-');
+      openDays = helpers.rangeToDays(dayRange[0], dayRange[1]);
+    }
+
+    var singleDaysRegex = /([a-zA-Z]{3})/g;
+    var singleDays = rawDays.match(singleDaysRegex);
+
+    _.each(singleDays, function(day) {
+      openDays.push(day);
+    });
+
+    return openDays;
+  }
+
+  function init(rawSched) {
+    var parsed = {};
+    var scheds = rawSched.split('/');
+    _.each(scheds, function(sched) {
+      sched = sched.trim();
+
+      var openclose = _parseHours(sched);
+      var days = _parseDays(sched);
+
+      _.each(days, function(day){
+        parsed[day] = {};
+        parsed[day].open = openclose[0];
+        parsed[day].close = openclose[1];
+      });
+    });
+    return parsed;
+  }
+
+  return schedule;
+};
+
 // formerly restaurant.js
 
   // wrote in pseudo-classical style since I didn't want all instances
   // of Restaurant to have their own instance of isOpen
 var Restaurant = function(name, rawHours) {
-  this.name = JSON.parse(name);
-  this.schedule = helpers.parseRawHours(rawHours);
+  this.name = name;
+  this.schedule = makeSchedule(rawHours);
 };
 
   // returns true if it's open for the time, false if not
@@ -157,77 +155,40 @@ Restaurant.prototype.isOpen = function(dateObj) {
   return false;
 };
 
-// formerly commaseparated.js
+var parseCSV = function(filename, callback) {
+  d3.text(filename, function(err, csvData) {
+    var data = d3.csv.parseRows(csvData);
+    var restaurants = [];
 
-var commaseparated = {
-    // parses CSV data line by line and creates a restaurant object from each line
-    //  then returns an array of restaurant objects
-  parser: function(csvData) {
-    var restaurantsRaw = csvData.toString().split(/\r?\n/);
-    var parsed = [];
-    var restInfo, venue;
+    for(var i=0; i<data.length; i++) {
+      var rest = new Restaurant(data[i][0], data[i][1]);
+      restaurants.push(rest);
+    }
 
-    _.each(restaurantsRaw, function(rest){
-      if(rest.length > 0) {
-        restInfo = rest.split(',"');
-        venue = new Restaurant(restInfo[0], restInfo[1]);
-        parsed.push(venue);
-      }
-    });
-
-    return parsed;
-  },
-
-    // caches CSV files so if the same filepath is called upon again
-    //  it reads the parsed object from the cache as opposed to the file
-  cacher: function() {
-    var cache = {};
-
-    return function(csv_filepath, callback) {
-      if(typeof cache[csv_filepath] === 'undefined') {
-        console.log('reading new csv file..');
-        d3.csv(csv_filepath, function (err, data) {
-          if (err) { throw err; }
-          else if(data) {
-            cache[csv_filepath] = commaseparated.parser(data);
-            callback(cache[csv_filepath]);
-          }
-        });
-      } else {
-        console.log('using cache..');
-        callback(cache[csv_filepath]);
-      }
-    };
-  }
+    return (callback) ? callback(restaurants) : restaurants;
+  });
 };
-
-var parseCSV = commaseparated.cacher();
 
 var find_open_restaurants = function(csv_filepath, dateObj, callback) {
   parseCSV(csv_filepath, function(restaurants) {
     var openSpots = [];
     var day = helpers.getDay(dateObj);
-
-    _.each(restaurants, function(rest) {
-      if(rest.isOpen(dateObj)) {
+    for(var i=0; i<restaurants.length; i++) {
+      if(restaurants[i].isOpen(dateObj)) {
         var spot = {
-          name: rest.name,
-          open: rest.schedule[day].open,
-          close: rest.schedule[day].close
+          name: restaurants[i].name,
+          open: restaurants[i].schedule[day].open,
+          close: restaurants[i].schedule[day].close
         };
-
+        if(spot.close < helpers._cutoff) {
+          spot.close += 24;
+        }
         openSpots.push(spot);
       }
+    }
+    openSpots = _.sortBy(openSpots, function(spot) {
+      return spot.name;
     });
-
     return (callback) ? callback(openSpots) : openSpots;
   });
 };
-
-find_open_restaurants('./rest_hours.csv', new Date());
-
-//   // this is to demonstrate the caching.. need a setTimeout to give the server
-//   //  some time to read and parse the CSV
-// setTimeout(function(){
-//   find_open_restaurants('./rest_hours.csv', new Date());
-// }, 1000);
