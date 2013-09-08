@@ -42,6 +42,31 @@ var helpers = {
     return hours;
   },
 
+  to12Hr: function(twentyfour) {
+    twentyfour = parseFloat(twentyfour);
+
+    var min = Math.floor((twentyfour % 1) * 60);
+    if(min === 0) {
+      min = '';
+    } else {
+      min = min + '';
+      min = (min.length<2) ? ':0'+ min : ':'+ min;
+    }
+
+    var hr = Math.floor(twentyfour);
+    if(hr === 0 || hr === 24) {
+      hr = '12'+ min +' am';
+    } else if(hr === 12) {
+      hr = '12'+ min +' pm';
+    } else if(hr > 12) {
+        hr = hr%12 + min +' pm';
+    } else {
+      hr = hr + min +' am';
+    }
+
+    return hr;
+  },
+
     // since the schedule considers early morning hours as the previous
     //  day, I've set 5am as the cutoff. times between midnight and 5am
     //  will reference the previous day's schedule

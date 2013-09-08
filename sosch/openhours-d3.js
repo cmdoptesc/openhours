@@ -27,14 +27,7 @@ var render = function(dataset) {
   var xScale = d3.scale.linear().domain([hr_offset, max+1]).range([0, width]),
       xValue = function(d) { return xScale(d.close - (d.open-hr_offset)); },
       xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(function(d){
-        var hr = d%24;
-
-        if(hr < 12) {
-          hr = (hr === 12) ? '12 am' : hr + ' am';
-        } else {
-          hr = hr + ' pm';
-        }
-        return hr;
+        return helpers.to12Hr(d%24);
       });
 
   // var yValue = function(d) { return d.name; },
