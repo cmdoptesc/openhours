@@ -1,7 +1,6 @@
 
 $(function() {
-  d3.select("#ChartArea").append('svg:svg')
-    .style('border', '1px solid rgba(153,153,153, 0.5)').attr("id",'openSpots');
+  d3.select("#ChartArea").append('svg:svg').attr("id",'ChartSVG');
 
   find_open_restaurants('rest_hours.csv', new Date(), function(openSpots) {
     render(openSpots);
@@ -15,7 +14,7 @@ var margin = {top: 20, right: 20, bottom: 30, left: 40},
 
 var render = function(dataset) {
   console.log('called');
-  var vis = d3.select("#openSpots");
+  var vis = d3.select("#ChartSVG");
 
     // where the bar chart starts
   var hr_offset = 6;
@@ -39,6 +38,15 @@ var render = function(dataset) {
       .attr("class", "x_axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
+
+  vis.selectAll("line.rule")
+      .data(xScale.ticks(max))
+      .enter().append("line")
+      .attr("class", 'rule')
+      .attr("x1", xScale)
+      .attr("x2", xScale)
+      .attr("y1", 0)
+      .attr("y2", height);
 
   var gBar = vis.selectAll("g.bar-group");
   gBar = gBar.data(dataset);
