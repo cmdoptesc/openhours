@@ -10,11 +10,15 @@ $(function() {
 
 var margin = {top: 20, right: 20, bottom: 30, left: 40},
     width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
+    height = 700 - margin.top - margin.bottom;
 
 function key(d) {
     return d.name;
   }
+
+function setY(d, i) {
+  return 'translate(0,'+ (i+1)*12 +')';
+}
 
 var redraw = function(dataset) {
 var hr_offset = 6;
@@ -27,23 +31,26 @@ var hr_offset = 6;
   var vis = d3.select("#ChartSVG");
   var gBar = vis.selectAll("g.bar-group");
   gBar = gBar.data(dataset, key);
-  gBar.exit().remove();
 
-  gBar.attr("transform", function(d, i) {
-        return 'translate(0,'+ i*10 +')';
-      });
+  gBar.exit().transition()
+      .duration(500)
+      .attr("transform", 'scale(1,0.5)')
+      .remove();
+
+  gBar.transition()
+      .duration(200)
+      .attr("transform", setY);
 
   var group = gBar.enter().append("svg:g")
       .attr("class", 'bar-group')
-      .attr("transform", function(d, i) {
-        return 'translate(0,'+ i*10 +')';
-      });
+      .attr("transform", setY);
 
   group.append('text')
     .attr("class", 'restaurant-names')
     .attr("x", function(d){
       return xScale(d.open)-10;
     })
+    .attr("y", 4)
     .attr("text-anchor", "end")
     .text(function(d){
       return d.name;
@@ -99,29 +106,6 @@ var render = function(dataset) {
   var hours = (currentTime.getHours() < helpers._cutoff) ? currentTime.getHours()+24 : currentTime.getHours();
   hours += Math.round((currentTime.getMinutes()/60)*10000)/10000;
 
-  vis.append("line")
-      .attr("class", 'current-time')
-      .attr("x1", xScale(hours))
-      .attr("x2", xScale(hours))
-      .attr("y1", 0)
-      .attr("y2", height)
-      .call(d3.behavior.drag().on("drag", move))
-      .on("mouseup", function(){
-        var hrs = reverseScale(d3.select(this).attr("x1"));
-
-        var tmp = new Date();
-        if(hrs >= 24) {
-          hrs -= 24;
-          tmp.setDate(tmp.getDate()-1);
-        }
-        var today = new Date(tmp.getFullYear(), tmp.getMonth(), tmp.getDate(), Math.floor(hrs), Math.floor((hrs%1)*60), 0, 0);
-
-        find_open_restaurants('rest_hours.csv', today, function(openSpots) {
-          redraw(openSpots);
-        });
-
-      });
-
   function move(){
       var dragTarget = d3.select(this);
       dragTarget
@@ -151,18 +135,14 @@ var render = function(dataset) {
 
   var group = gBar.enter().append("svg:g")
       .attr("class", 'bar-group')
-      .attr("transform", function(d, i) {
-        return 'translate(0,'+ i*10 +')';
-      });
+      .attr("transform", setY);
 
   group.append('text')
     .attr("class", 'restaurant-names')
     .attr("x", function(d){
       return xScale(d.open)-10;
     })
-    .attr("y", function(d, i){
-      return i*10;
-    })
+    .attr("y", 4)
     .attr("text-anchor", "end")
     .text(function(d){
       return d.name;
@@ -172,9 +152,6 @@ var render = function(dataset) {
     .attr("class", 'rect-rest')
     .attr("x", function(d){
       return xScale(d.open);
-    })
-    .attr("y", function(d, i){
-      return i*10;
     })
     .attr("width", xValue)
     .attr("height", 4)
@@ -190,6 +167,28 @@ var render = function(dataset) {
           .attr("transform", "translate(0,0)");
     });
 
+  vis.append("line")
+      .attr("class", 'current-time')
+      .attr("x1", xScale(hours))
+      .attr("x2", xScale(hours))
+      .attr("y1", 0)
+      .attr("y2", height)
+      .call(d3.behavior.drag().on("drag", move))
+      .on("mouseup", function(){
+        var hrs = reverseScale(d3.select(this).attr("x1"));
+
+        var tmp = new Date();
+        if(hrs >= 24) {
+          hrs -= 24;
+          tmp.setDate(tmp.getDate()-1);
+        }
+        var today = new Date(tmp.getFullYear(), tmp.getMonth(), tmp.getDate(), Math.floor(hrs), Math.floor((hrs%1)*60), 0, 0);
+
+        find_open_restaurants('rest_hours.csv', today, function(openSpots) {
+          redraw(openSpots);
+        });
+
+      });
 
 
 };
