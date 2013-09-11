@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <title>What's open now?</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.1/underscore-min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
+    <script src="openhours.js"></script>
+
+    <style>
+      #ChartSVG {
+        border: 1px solid rgba(153,153,153, 0.5);
+      }
+
+      line.rule {
+        stroke: #ccc;
+      }
+
+      line.current-time {
+        stroke: #f00;
+        stroke-width: 3px;
+        cursor: pointer;
+      }
+
+      .x-axis text {
+        font: 12px sans-serif;
+      }
+
+      text.restaurant-names {
+        font: 10px sans-serif;
+        color: #666;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="container">
+      <div id="ChartArea"></div>
+    </div>
+
+    <script src="openhours-d3.js"></script>
+  </body>
+</html>
