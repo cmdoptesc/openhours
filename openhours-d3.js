@@ -24,7 +24,9 @@ d3methods.setY = function(d, i) {
   return 'translate(0,'+ (i+1)*12 +')';
 };
 
-d3methods.reverseScale = {};
+d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.hr_offset, 29]);
+d3methods.xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
+d3methods.xValue = function(d) { return d3methods.xScale(d.close - (d.open-d3methods.hr_offset)); };
 
 d3methods.move = function(){
   var dragTarget = d3.select(this);
@@ -47,14 +49,6 @@ d3methods.move = function(){
 };
 
 var redraw = function(dataset) {
-
-  var max = d3.max(dataset, function(d) {
-    return d.close;
-  });
-
-  var xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
-      xValue = function(d) { return xScale(d.close - (d.open-d3methods.hr_offset)); };
-
   var vis = d3.select("#ChartSVG");
   var gBar = vis.selectAll("g.bar-group");
   gBar = gBar.data(dataset, d3methods.key);
@@ -75,7 +69,7 @@ var redraw = function(dataset) {
   group.append('text')
       .attr("class", 'restaurant-names')
       .attr("x", function(d){
-        return xScale(d.open)-10;
+        return d3methods.xScale(d.open)-10;
       })
       .attr("y", 4)
       .attr("text-anchor", "end")
@@ -86,9 +80,9 @@ var redraw = function(dataset) {
   group.append('rect')
       .attr("class", 'rect-rest')
       .attr("x", function(d){
-        return xScale(d.open);
+        return d3methods.xScale(d.open);
       })
-      .attr("width", xValue)
+      .attr("width", d3methods.xValue)
       .attr("height", 4)
       .on("mouseover", function() {
         d3.select(this).transition()
@@ -110,43 +104,36 @@ var render = function(dataset) {
   var vis = d3.select("#ChartSVG");
 
 
-  var max = d3.max(dataset, function(d) {
-    return d.close;
-  });
-
-  d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.hr_offset, 29]);
-
-  var xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
-      xValue = function(d) { return xScale(d.close - (d.open-d3methods.hr_offset)); },
-      xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(function(d){
-        return helpers.to12Hr(d%24);
-      });
-
   // var yValue = function(d) { return d.name; },
   //     yScale = d3.scale.ordinal().rangeRoundBands([0, width], .1), // value -> display
   //     yMap = function(d) { return yScale(yValue(d)); }, // data -> display
   //     yAxis = d3.svg.axis().scale(yScale).orient("left");
 
+    // x-axis
+  var xAxis = d3.svg.axis().scale(d3methods.xScale).orient("bottom").tickFormat(function(d){
+        return helpers.to12Hr(d%24);
+      });
+  
   vis.append("g")
       .attr("class", 'x-axis')
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
 
+    // rules
   var x_rules = vis.append("g").attr("class", 'x-rules');
-
   x_rules.selectAll("line.rule")
-      .data(xScale.ticks(max))
+      .data(d3methods.xScale.ticks(29))
       .enter().append("line")
       .attr("class", 'rule')
-      .attr("x1", xScale)
-      .attr("x2", xScale)
+      .attr("x1", d3methods.xScale)
+      .attr("x2", d3methods.xScale)
       .attr("y1", 0)
       .attr("y2", height);
 
+    // all the open restaurants
   var gBar = vis.selectAll("g.bar-group");
   gBar = gBar.data(dataset, d3methods.key);
 
-    // all the open restaurants
   var group = gBar.enter().append("svg:g")
       .attr("class", 'bar-group')
       .attr("transform", d3methods.setY);
@@ -154,7 +141,7 @@ var render = function(dataset) {
   group.append('text')
       .attr("class", 'restaurant-names')
       .attr("x", function(d){
-        return xScale(d.open)-10;
+        return d3methods.xScale(d.open)-10;
       })
       .attr("y", 4)
       .attr("text-anchor", "end")
@@ -165,9 +152,9 @@ var render = function(dataset) {
   group.append('rect')
       .attr("class", 'rect-rest')
       .attr("x", function(d){
-        return xScale(d.open);
+        return d3methods.xScale(d.open);
       })
-      .attr("width", xValue)
+      .attr("width", d3methods.xValue)
       .attr("height", 4)
       .on("mouseover", function() {
         d3.select(this).transition()
@@ -188,8 +175,8 @@ var render = function(dataset) {
     // line representing current time
   vis.append("line")
       .attr("class", 'current-time')
-      .attr("x1", xScale(rightNow))
-      .attr("x2", xScale(rightNow))
+      .attr("x1", d3methods.xScale(rightNow))
+      .attr("x2", d3methods.xScale(rightNow))
       .attr("y1", 0)
       .attr("y2", height)
       .call(d3.behavior.drag().on("drag", d3methods.move));
