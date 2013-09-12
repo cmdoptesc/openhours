@@ -180,33 +180,46 @@ Restaurant.prototype.isOpen = function(dateObj) {
   return false;
 };
 
-var parseCSV = function(filename, callback) {
-  d3.text(filename, function(err, csvData) {
-    var data = d3.csv.parseRows(csvData);
-    var restaurants = [];
+var parseCsvMaker = function() {
+  var cache = {};
 
-    for(var i=0; i<data.length; i++) {
-      var rest = new Restaurant(data[i][0], data[i][1]);
-      restaurants.push(rest);
-    }
+  return function(filename, callback) {
+    if(cache[filename]) {
+      return (callback) ? callback(cache[filename]) : cache[filename];
+    } else {
+      d3.text(filename, function(err, csvData) {
+        var data = d3.csv.parseRows(csvData);
+        var restaurants = [];
 
-    return (callback) ? callback(restaurants) : restaurants;
-  });
+        for(var i=0; i<data.length; i++) {
+          var rest = new Restaurant(data[i][0], data[i][1]);
+          restaurants.push(rest);
+        }
+
+        cache[filename] = restaurants;
+        
+        return (callback) ? callback(restaurants) : restaurants;
+      });
+    };
+  };
 };
+
+var parseCSV = parseCsvMaker();
 
 var find_open_restaurants = function(csv_filepath, dateObj, callback) {
   parseCSV(csv_filepath, function(restaurants) {
     var openSpots = [];
     var day = helpers.getDay(dateObj);
+    var spot = {};
     for(var i=0; i<restaurants.length; i++) {
       if(restaurants[i].isOpen(dateObj)) {
-        var spot = {
+        spot = {
           name: restaurants[i].name,
           open: restaurants[i].schedule[day].open,
           close: restaurants[i].schedule[day].close
         };
         if(spot.close < helpers._cutoff) {
-          spot.close += 24;
+          spot.close += 24;     // modified data for D3.. really should be on D3 end
         }
         openSpots.push(spot);
       }
