@@ -52,7 +52,7 @@ var redraw = function(dataset) {
     return d.close;
   });
 
-  var xScale = d3.scale.linear().domain([d3methods.hr_offset, max+1]).range([0, width]),
+  var xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
       xValue = function(d) { return xScale(d.close - (d.open-d3methods.hr_offset)); };
 
   var vis = d3.select("#ChartSVG");
@@ -114,9 +114,9 @@ var render = function(dataset) {
     return d.close;
   });
 
-  d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.hr_offset, max+1]);
+  d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.hr_offset, 29]);
 
-  var xScale = d3.scale.linear().domain([d3methods.hr_offset, max+1]).range([0, width]),
+  var xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
       xValue = function(d) { return xScale(d.close - (d.open-d3methods.hr_offset)); },
       xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(function(d){
         return helpers.to12Hr(d%24);
