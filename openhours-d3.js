@@ -21,7 +21,7 @@ d3methods.key = function(d) {
 };
 
 d3methods.setY = function(d, i) {
-  return 'translate(0,'+ (i+1)*12 +')';
+  return 'translate(0,'+ (((i+1)*12)+margin.top) +')';
 };
 
 d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.hr_offset, 29]);
@@ -31,8 +31,8 @@ d3methods.xValue = function(d) { return d3methods.xScale(d.close - (d.open-d3met
 d3methods.move = function(){
   var dragTarget = d3.select(this);
   dragTarget
-    .attr("x1", function(){return d3.event.dx + parseInt(dragTarget.attr("x1"))})
-    .attr("x2", function(){return d3.event.dx + parseInt(dragTarget.attr("x2"))})
+    .attr("x1", function(){return d3.event.dx + parseInt(dragTarget.attr("x1"), 10)})
+    .attr("x2", function(){return d3.event.dx + parseInt(dragTarget.attr("x2"), 10)})
 
   var hrs = d3methods.reverseScale(dragTarget.attr("x1"));
 
@@ -53,16 +53,41 @@ var redraw = function(dataset) {
   var gBar = vis.selectAll("g.bar-group");
   gBar = gBar.data(dataset, d3methods.key);
 
-  gBar.exit().transition()
-      .duration(500)
-      .attr("transform", 'scale(1,0.5)')
-      .remove();
+  gBar.exit().attr("opacity", 0.5)
+      .transition()
+        .duration(300)
+        .attr("transform", function(d, i) {
+          var x1 = d3methods.xScale(d.open);
+          var x2 = x1 + d3methods.xValue(d);
+          var redline = parseInt(d3.select("line.current-time").attr("x1"), 10);
 
-  gBar.transition()
-      .duration(200)
-      .attr("transform", d3methods.setY);
+          var translateX;
+          if(redline >= x2) {
+            translateX = -700;
+          } else if(redline <= x1) {
+            translateX = width + 700;
+          }
+          return 'translate('+ translateX +','+ this._y +')';
+        })
+        .remove();
 
-  var group = gBar.enter().append("svg:g")
+  gBar.attr("opacity", 0.75)
+      .transition()
+      .duration(250)
+      .attr("transform", d3methods.setY)
+      .each('end', function() {
+        d3.select(this).attr("opacity", 1);
+
+        var coordsRaw = d3.select(this).attr("transform");
+        var coordsRegex = /(\d+)/g;
+        if(coordsRaw) {
+          var coords = coordsRaw.match(coordsRegex);
+          this._y = coords[1];
+        }
+      });
+
+  var group = gBar.enter()
+      .append("svg:g")
       .attr("class", 'bar-group')
       .attr("transform", d3methods.setY);
 
@@ -103,20 +128,14 @@ var redraw = function(dataset) {
 var render = function(dataset) {
   var vis = d3.select("#ChartSVG");
 
-
-  // var yValue = function(d) { return d.name; },
-  //     yScale = d3.scale.ordinal().rangeRoundBands([0, width], .1), // value -> display
-  //     yMap = function(d) { return yScale(yValue(d)); }, // data -> display
-  //     yAxis = d3.svg.axis().scale(yScale).orient("left");
-
     // x-axis
-  var xAxis = d3.svg.axis().scale(d3methods.xScale).orient("bottom").tickFormat(function(d){
+  var xAxis = d3.svg.axis().scale(d3methods.xScale).orient("top").tickSize(0).tickFormat(function(d){
         return helpers.to12Hr(d%24);
       });
-  
+
   vis.append("g")
       .attr("class", 'x-axis')
-      .attr("transform", "translate(0," + height + ")")
+      .attr("transform", "translate(0,20)")
       .call(xAxis);
 
     // rules
@@ -127,7 +146,7 @@ var render = function(dataset) {
       .attr("class", 'rule')
       .attr("x1", d3methods.xScale)
       .attr("x2", d3methods.xScale)
-      .attr("y1", 0)
+      .attr("y1", margin.top)
       .attr("y2", height);
 
     // all the open restaurants
@@ -177,7 +196,7 @@ var render = function(dataset) {
       .attr("class", 'current-time')
       .attr("x1", d3methods.xScale(rightNow))
       .attr("x2", d3methods.xScale(rightNow))
-      .attr("y1", 0)
+      .attr("y1", margin.top-1)
       .attr("y2", height)
       .call(d3.behavior.drag().on("drag", d3methods.move));
 };
