@@ -13,7 +13,8 @@ var margin = {top: 20, right: 20, bottom: 30, left: 40},
     height = 700 - margin.top - margin.bottom;
 
 var d3methods = {
-  hr_offset: 4
+  hr_offset: 4,
+  red_x: undefined
 };
 
 d3methods.key = function(d) {
@@ -28,6 +29,8 @@ d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.h
 d3methods.xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
 d3methods.xValue = function(d) { return d3methods.xScale(d.close - (d.open-d3methods.hr_offset)); };
 
+
+    // deprecated!
 d3methods.move = function(){
   var dragTarget = d3.select(this);
   dragTarget
@@ -48,23 +51,41 @@ d3methods.move = function(){
   });
 };
 
+d3methods.dragmove = function(d) {
+  d3methods.red_x += d3.event.dx;
+  d3.select(this).attr("transform", "translate(" + d3methods.red_x + "," + (margin.top+1) + ")");
+
+  var hrs = d3methods.reverseScale(d3methods.red_x);
+
+  var tmp = new Date();
+  if(hrs >= 24) {
+    hrs -= 24;
+    tmp.setDate(tmp.getDate()-1);
+  }
+  var today = new Date(tmp.getFullYear(), tmp.getMonth(), tmp.getDate(), Math.floor(hrs), Math.floor((hrs%1)*60), 0, 0);
+
+  find_open_restaurants('rest_hours.csv', today, function(openSpots) {
+    redraw(openSpots);
+  });
+};
+
+
 var redraw = function(dataset) {
   var vis = d3.select("#ChartSVG");
   var gBar = vis.selectAll("g.bar-group");
   gBar = gBar.data(dataset, d3methods.key);
 
-  gBar.exit().attr("opacity", 0.5)
+  gBar.exit().attr("opacity", 0.25)
       .transition()
         .duration(300)
         .attr("transform", function(d, i) {
           var x1 = d3methods.xScale(d.open);
           var x2 = x1 + d3methods.xValue(d);
-          var redline = parseInt(d3.select("line.current-time").attr("x1"), 10);
 
           var translateX;
-          if(redline >= x2) {
+          if(d3methods.red_x >= x2) {
             translateX = -700;
-          } else if(redline <= x1) {
+          } else if(d3methods.red_x <= x1) {
             translateX = width + 700;
           }
           return 'translate('+ translateX +','+ this._y +')';
@@ -121,7 +142,7 @@ var redraw = function(dataset) {
             .attr("transform", "translate(0,0)");
       });
 
-      var current = d3.select("line.current-time").node();
+      var current = d3.select("g.current-time-group").node();
       current.parentNode.appendChild(current);
 }
 
@@ -190,13 +211,26 @@ var render = function(dataset) {
   var currentTime = new Date();
   var rightNow = (currentTime.getHours() < helpers._cutoff) ? currentTime.getHours()+24 : currentTime.getHours();
   rightNow += Math.round((currentTime.getMinutes()/60)*10000)/10000;
+  d3methods.red_x = d3methods.xScale(rightNow);
 
     // line representing current time
-  vis.append("line")
+  var gCurrent = vis.append("svg:g")
+                  .attr("class", 'current-time-group')
+                  .attr("transform", 'translate('+ d3methods.red_x +','+ (margin.top+1) +')')
+                  .call(d3.behavior.drag().on("drag", d3methods.dragmove));
+
+  gCurrent.append("line")
       .attr("class", 'current-time')
-      .attr("x1", d3methods.xScale(rightNow))
-      .attr("x2", d3methods.xScale(rightNow))
-      .attr("y1", margin.top-1)
-      .attr("y2", height)
-      .call(d3.behavior.drag().on("drag", d3methods.move));
+      .attr("x1", 0)
+      .attr("x2", 0)
+      .attr("y1", 0)
+      .attr("y2", height-margin.top-1);
+
+  gCurrent.append('rect')
+      .attr("class", 'current-clickoverlay')
+      .attr("x", -8)
+      .attr("y", 0)
+      .attr("width", 16)
+      .attr("height", height-margin.top-1)
+      .attr("opacity", 0);
 };
