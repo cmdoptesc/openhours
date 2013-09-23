@@ -29,8 +29,6 @@ d3methods.reverseScale = d3.scale.linear().domain([0, width]).range([d3methods.h
 d3methods.xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0, width]),
 d3methods.xValue = function(d) { return d3methods.xScale(d.close - (d.open-d3methods.hr_offset)); };
 
-
-
 d3methods.dragmove = function(d) {
   d3methods.red_x += d3.event.dx;
   d3.select(this).attr("transform", "translate(" + d3methods.red_x + "," + (margin.top+1) + ")");
@@ -63,6 +61,7 @@ var redraw = function(dataset) {
           var x2 = x1 + d3methods.xValue(d);
 
           var translateX;
+            // to move left/right depending where the red line is
           if(d3methods.red_x >= x2) {
             translateX = -700;
           } else if(d3methods.red_x <= x1) {
@@ -122,6 +121,7 @@ var redraw = function(dataset) {
             .attr("transform", "translate(0,0)");
       });
 
+        // bring the current time group to the front again
       var current = d3.select("g.current-time-group").node();
       current.parentNode.appendChild(current);
 }
@@ -193,12 +193,13 @@ var render = function(dataset) {
   rightNow += Math.round((currentTime.getMinutes()/60)*10000)/10000;
   d3methods.red_x = d3methods.xScale(rightNow);
 
-    // line representing current time
+    // group representing current time
   var gCurrent = vis.append("svg:g")
                   .attr("class", 'current-time-group')
                   .attr("transform", 'translate('+ d3methods.red_x +','+ (margin.top+1) +')')
                   .call(d3.behavior.drag().on("drag", d3methods.dragmove));
 
+    // the red line
   gCurrent.append("line")
       .attr("class", 'current-time')
       .attr("x1", 0)
@@ -206,6 +207,7 @@ var render = function(dataset) {
       .attr("y1", 0)
       .attr("y2", height-margin.top-1);
 
+    // to make the click area bigger
   gCurrent.append('rect')
       .attr("class", 'current-clickoverlay')
       .attr("x", -8)
