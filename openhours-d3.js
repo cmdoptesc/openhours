@@ -30,26 +30,6 @@ d3methods.xScale = d3.scale.linear().domain([d3methods.hr_offset, 29]).range([0,
 d3methods.xValue = function(d) { return d3methods.xScale(d.close - (d.open-d3methods.hr_offset)); };
 
 
-    // deprecated!
-d3methods.move = function(){
-  var dragTarget = d3.select(this);
-  dragTarget
-    .attr("x1", function(){return d3.event.dx + parseInt(dragTarget.attr("x1"), 10)})
-    .attr("x2", function(){return d3.event.dx + parseInt(dragTarget.attr("x2"), 10)})
-
-  var hrs = d3methods.reverseScale(dragTarget.attr("x1"));
-
-  var tmp = new Date();
-  if(hrs >= 24) {
-    hrs -= 24;
-    tmp.setDate(tmp.getDate()-1);
-  }
-  var today = new Date(tmp.getFullYear(), tmp.getMonth(), tmp.getDate(), Math.floor(hrs), Math.floor((hrs%1)*60), 0, 0);
-
-  find_open_restaurants('rest_hours.csv', today, function(openSpots) {
-    redraw(openSpots);
-  });
-};
 
 d3methods.dragmove = function(d) {
   d3methods.red_x += d3.event.dx;
